@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BiasLens - Political Bias Detector</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --accent: #38bdf8;
+            --accent-hover: #0ea5e9;
+            --danger: #ef4444;
+            --success: #22c55e;
+            --warning: #eab308;
+            --neutral: #64748b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #38bdf8 0%, #818cf8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+        }
+
+        .input-group {
+            background: var(--card-bg);
+            padding: 0.5rem;
+            border-radius: 1rem;
+            display: flex;
+            gap: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            margin-bottom: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .input-group:focus-within {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            border-color: var(--accent);
+        }
+
+        input[type="text"] {
+            flex: 1;
+            background: transparent;
+            border: none;
+            padding: 1rem;
+            color: var(--text-primary);
+            font-size: 1rem;
+            font-family: inherit;
+            outline: none;
+        }
+
+        button {
+            background: var(--accent);
+            color: var(--bg-color);
+            border: none;
+            padding: 0.8rem 2rem;
+            border-radius: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-size: 1rem;
+        }
+
+        button:hover {
+            background: var(--accent-hover);
+        }
+
+        button:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        #results {
+            display: none;
+            flex-direction: column;
+            gap: 2rem;
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 1rem;
+            padding: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .card h2 {
+            margin-bottom: 1.5rem;
+            font-size: 1.5rem;
+            color: var(--text-primary);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 0.5rem;
+        }
+
+        /* Meters */
+        .entity-row {
+            margin-bottom: 1.5rem;
+        }
+
+        .entity-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .meter-container {
+            height: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .meter-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--danger) 0%, var(--neutral) 50%, var(--success) 100%);
+            width: 100%;
+            opacity: 0.3;
+        }
+
+        .meter-indicator {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: #fff;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+            transition: left 1s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .meter-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-top: 0.3rem;
+        }
+
+        /* Bias Risk */
+        .risk-container {
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+        
+        .risk-score {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .risk-bar-container {
+            height: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            margin: 1rem 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .risk-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--success) 0%, var(--warning) 50%, var(--danger) 100%);
+            width: 0%;
+            transition: width 1s ease-out;
+            border-radius: 10px;
+        }
+
+        /* Sentences */
+        .sentence {
+            padding: 1rem;
+            margin-bottom: 0.8rem;
+            border-radius: 0.5rem;
+            background: rgba(255, 255, 255, 0.03);
+            border-left: 4px solid transparent;
+        }
+
+        .sentence.positive { border-left-color: var(--success); }
+        .sentence.negative { border-left-color: var(--danger); }
+        .sentence.neutral { border-left-color: var(--neutral); }
+
+        .tag {
+            display: inline-block;
+            padding: 0.2rem 0.5rem;
+            border-radius: 0.3rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+        }
+        
+        .tag.positive { background: rgba(34, 197, 94, 0.2); color: var(--success); }
+        .tag.negative { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
+
+        .loader {
+            display: none;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            border-top: 3px solid var(--accent);
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes fadeInDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>BiasLens</h1>
+        <p class="subtitle">AI-Powered Political Bias & Propaganda Detector</p>
+    </header>
+
+    <div class="container">
+        <div class="input-group">
+            <input type="text" id="urlInput" placeholder="Paste news article URL here..." autocomplete="off">
+            <button id="analyzeBtn">
+                <span class="btn-text">Analyze</span>
+                <div class="loader"></div>
+            </button>
+        </div>
+
+        <div id="results">
+            <!-- Bias Risk Section -->
+            <div class="card">
+                <h2>Overall Bias Risk</h2>
+                <div class="risk-container">
+                    <div class="risk-score" id="riskLabel">Low Risk</div>
+                    <div class="risk-bar-container">
+                        <div class="risk-bar-fill" id="riskBar"></div>
+                    </div>
+                    <div class="meter-labels">
+                        <span>Low Bias</span>
+                        <span>Medium Bias</span>
+                        <span>High Bias</span>
+                    </div>
+                </div>
+                <div id="explanation" style="color: var(--text-secondary); font-size: 0.9rem;"></div>
+            </div>
+
+            <!-- Stance Section -->
+            <div class="card">
+                <h2>Entity Stance Analysis</h2>
+                <div id="stanceContainer">
+                    <!-- Stance meters injected here -->
+                </div>
+            </div>
+
+            <!-- Evidence Section -->
+            <div class="card">
+                <h2>Key Evidence</h2>
+                <div id="evidenceContainer">
+                    <!-- Sentences injected here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const urlInput = document.getElementById('urlInput');
+        const resultsDiv = document.getElementById('results');
+        const loader = document.querySelector('.loader');
+        const btnText = document.querySelector('.btn-text');
+
+        analyzeBtn.addEventListener('click', async () => {
+            const url = urlInput.value.trim();
+            if (!url) return;
+
+            // UI State: Loading
+            analyzeBtn.disabled = true;
+            btnText.style.display = 'none';
+            loader.style.display = 'block';
+            resultsDiv.style.display = 'none';
+
+            try {
+                const response = await fetch('/analyze', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Analysis failed');
+                }
+
+                const data = await response.json();
+                renderResults(data);
+
+            } catch (error) {
+                alert('Error analyzing URL: ' + error.message);
+            } finally {
+                analyzeBtn.disabled = false;
+                btnText.style.display = 'block';
+                loader.style.display = 'none';
+            }
+        });
+
+        function renderResults(data) {
+            resultsDiv.style.display = 'flex';
+
+            // 1. Bias Risk
+            const riskLabel = document.getElementById('riskLabel');
+            const riskBar = document.getElementById('riskBar');
+            const explanationDiv = document.getElementById('explanation');
+
+            riskLabel.textContent = data.bias_label;
+            riskLabel.style.color = getRiskColor(data.bias_risk);
+            riskBar.style.width = `${data.bias_risk * 100}%`;
+            riskBar.style.background = `linear-gradient(90deg, #22c55e 0%, ${getRiskColor(data.bias_risk)} 100%)`;
+            
+            explanationDiv.innerHTML = data.explanation.map(e => `<p>• ${e}</p>`).join('');
+
+            // 2. Stance Meters
+            const stanceContainer = document.getElementById('stanceContainer');
+            stanceContainer.innerHTML = '';
+            
+            if (data.entities.length === 0) {
+                stanceContainer.innerHTML = '<p style="color: var(--text-secondary)">No political entities detected.</p>';
+            }
+
+            data.entities.forEach(ent => {
+                const div = document.createElement('div');
+                div.className = 'entity-row';
+                div.innerHTML = `
+                    <div class="entity-header">
+                        <span>${ent.name}</span>
+                        <span style="color: ${getStanceColor(ent.avg_sentiment)}">${ent.stance_label}</span>
+                    </div>
+                    <div class="meter-container">
+                        <div class="meter-bar"></div>
+                        <div class="meter-indicator" style="left: ${ent.stance_meter}%"></div>
+                    </div>
+                    <div class="meter-labels">
+                        <span>Anti</span>
+                        <span>Neutral</span>
+                        <span>Pro</span>
+                    </div>
+                `;
+                stanceContainer.appendChild(div);
+            });
+
+            // 3. Evidence
+            const evidenceContainer = document.getElementById('evidenceContainer');
+            evidenceContainer.innerHTML = '';
+            
+            let hasEvidence = false;
+            data.entities.forEach(ent => {
+                ent.key_sentences.forEach(sent => {
+                    hasEvidence = true;
+                    const div = document.createElement('div');
+                    const sentiment = sent.score > 0.05 ? 'positive' : (sent.score < -0.05 ? 'negative' : 'neutral');
+                    div.className = `sentence ${sentiment}`;
+                    div.innerHTML = `
+                        <div class="tag ${sentiment}">${ent.name}: ${sentiment.toUpperCase()} (${sent.score.toFixed(2)})</div>
+                        <p>"${sent.text}"</p>
+                    `;
+                    evidenceContainer.appendChild(div);
+                });
+            });
+
+            if (!hasEvidence) {
+                evidenceContainer.innerHTML = '<p style="color: var(--text-secondary)">No strong evidence sentences found.</p>';
+            }
+        }
+
+        function getRiskColor(score) {
+            if (score < 0.3) return '#22c55e'; // Green
+            if (score < 0.6) return '#eab308'; // Yellow
+            return '#ef4444'; // Red
+        }
+
+        function getStanceColor(score) {
+            if (score > 0.1) return '#22c55e';
+            if (score < -0.1) return '#ef4444';
+            return '#94a3b8';
+        }
+    </script>
+</body>
+</html>
