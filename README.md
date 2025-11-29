@@ -58,6 +58,18 @@ BiasLens uses external JSON configuration files located in the `config/` directo
 *   `opinion_signals.json` & `fact_markers.json`: For subjectivity analysis.
 *   `discourse_markers.json`: For balance detection.
 
+## 📜 Historical Data Analysis
+
+BiasLens includes a module to analyze historical bias of news sources.
+The script `historical_analysis.py` (derived from `historical_data_analysis.ipynb`) can process large datasets of articles to compute long-term bias metrics.
+
+To run the analysis:
+```bash
+python historical_analysis.py path/to/dataset.csv --text_col "News Content"
+```
+
+The results (JSON metrics) can be placed in `historical_data_analyis_result/<domain>/bias_metrics.json` to be used by the live application.
+
 ## 📊 Evaluation
 
 To evaluate the model against a test set:

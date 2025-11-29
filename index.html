@@ -50,6 +50,7 @@
             font-size: 3rem;
             font-weight: 700;
             background: linear-gradient(135deg, #38bdf8 0%, #818cf8 100%);
+            background-clip: text;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             margin-bottom: 0.5rem;
@@ -330,7 +331,17 @@
                         <span>High Bias</span>
                     </div>
                 </div>
-                <div id="explanation" style="color: var(--text-secondary); font-size: 0.9rem;"></div>
+                <div class="result-section">
+                    <h3>📝 Why this score?</h3>
+                    <ul class="explanation-list" id="explanationList"></ul>
+                </div>
+                <div id="explanation" style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 1rem;"></div>
+            </div>
+
+            <!-- Historical Data Section -->
+            <div class="card" id="historicalSection" style="display: none;">
+                <h2>📜 Historical Source Analysis</h2>
+                <div id="historicalContent"></div>
             </div>
 
             <!-- Stance Section -->
@@ -491,6 +502,36 @@
 
             if (!hasEvidence) {
                 evidenceContainer.innerHTML = '<p style="color: var(--text-secondary)">No strong evidence sentences found.</p>';
+            }
+
+            // 4. Historical Data (New Section)
+            const historicalSection = document.getElementById('historicalSection');
+            if (data.historical_data) {
+                historicalSection.style.display = 'block';
+                const hist = data.historical_data;
+
+                let html = `
+                    <div class="metric-card" style="background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 0.5rem;">
+                        <h4 style="margin-bottom: 0.5rem; color: var(--accent);">Historical Bias (Last 1 Year)</h4>
+                        <p><strong>Overall Bias Score Difference:</strong> ${hist.comparative.bias_score_difference.toFixed(3)}</p>
+                        <p><strong>Sentiment Gap (BJP vs Congress):</strong> ${hist.comparative.sentiment_gap.toFixed(2)}%</p>
+                        <div style="margin-top: 10px; display: flex; gap: 20px;">
+                            <div>
+                                <h5 style="color: var(--text-secondary);">BJP Coverage</h5>
+                                <p>Positive: ${hist.bjp.sentiment_distribution.positive.toFixed(1)}%</p>
+                                <p>Negative: ${hist.bjp.sentiment_distribution.negative.toFixed(1)}%</p>
+                            </div>
+                            <div>
+                                <h5 style="color: var(--text-secondary);">Congress Coverage</h5>
+                                <p>Positive: ${hist.congress.sentiment_distribution.positive.toFixed(1)}%</p>
+                                <p>Negative: ${hist.congress.sentiment_distribution.negative.toFixed(1)}%</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                document.getElementById('historicalContent').innerHTML = html;
+            } else {
+                historicalSection.style.display = 'none';
             }
         }
 

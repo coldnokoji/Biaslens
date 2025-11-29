@@ -1,4 +1,8 @@
 url,main_entity,true_stance,true_bias_risk
 https://en.wikipedia.org/wiki/Narendra_Modi,BJP,1,0
 https://en.wikipedia.org/wiki/Rahul_Gandhi,Congress,0,0
-https://www.opindia.com/2023/08/rahul-gandhi-flying-kiss-smriti-irani-parliament-congress-defends/,Congress,-2,2
+https://en.wikipedia.org/wiki/Arvind_Kejriwal,AAP,0,0
+https://www.opindia.com/2024/06/rahul-gandhi-lies-archive-fake-news/,Congress,-2,2
+https://www.thehindu.com/news/national/pm-modi-independence-day-speech-2024-highlights/article68526583.ece,BJP,1,0
+https://www.ndtv.com/delhi-news/arvind-kejriwal-delhi-model-of-governance-better-than-pm-modis-model-2175023,AAP,2,1
+https://scroll.in/article/1022034/from-political-party-to-social-movement-how-the-congress-is-trying-to-reinvent-itself,Congress,-1,0

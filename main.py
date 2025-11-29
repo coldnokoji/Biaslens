@@ -157,8 +157,29 @@ class AnalyzeRequest(BaseModel):
 
 @app.get("/", response_class=HTMLResponse)
 async def read_root():
-    with open("index.html", "r") as f:
+    with open("index.html", "r", encoding="utf-8") as f:
         return f.read()
+
+# ... (previous code)
+
+# Load Historical Bias Metrics
+HISTORICAL_METRICS = {}
+try:
+    # Load Indian Express metrics as an example
+    ie_path = os.path.join("historical_data_analyis_result", "indian-express", "bias_metrics.json")
+    with open(ie_path, "r", encoding="utf-8") as f:
+        metrics = json.load(f)
+        # Store by domain
+        HISTORICAL_METRICS["indianexpress.com"] = metrics
+        HISTORICAL_METRICS["www.indianexpress.com"] = metrics
+        print("Loaded historical metrics for Indian Express")
+except FileNotFoundError:
+    print("Warning: Historical metrics for Indian Express not found.")
+
+def get_source_metrics(url: str) -> Dict[str, Any]:
+    from urllib.parse import urlparse
+    domain = urlparse(url).netloc.lower()
+    return HISTORICAL_METRICS.get(domain)
 
 @app.post("/analyze")
 async def analyze_article(request: AnalyzeRequest):
@@ -171,7 +192,14 @@ async def analyze_article(request: AnalyzeRequest):
         subjectivity_score = analyze_subjectivity(sentences)
         loaded_bias = analyze_loaded_language(text)
         balance_bias = analyze_balance(sentences)
-        source_history = 0.0 
+        
+        # Model 5: Source History
+        source_metrics = get_source_metrics(request.url)
+        source_history = 0.0
+        
+        if source_metrics and 'comparative' in source_metrics:
+             diff = abs(source_metrics['comparative']['bias_score_difference'])
+             source_history = min(1.0, diff * 5)
         
         max_stance_dev = 0
         for res in stance_results:
@@ -196,12 +224,16 @@ async def analyze_article(request: AnalyzeRequest):
             f"Loaded Language Score: {loaded_bias:.2f} (Use of inflammatory words)",
             f"Lack of Balance: {balance_bias:.2f} (Few counter-perspectives detected)"
         ]
+        
+        if source_history > 0.1:
+            explanation.append(f"Source History: {source_history:.2f} (Domain has known historical bias)")
 
         return {
             "entities": stance_results,
             "bias_risk": round(overall_bias, 2),
             "bias_label": bias_label,
-            "explanation": explanation
+            "explanation": explanation,
+            "historical_data": source_metrics
         }
         
     except HTTPException as he:

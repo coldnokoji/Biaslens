@@ -1,0 +1,41 @@
+{
+    "bjp": {
+        "total_mentions": 4701,
+        "sentiment_distribution": {
+            "positive": 6.955966815571155,
+            "negative": 11.018932142097427,
+            "neutral": 82.02510104233141
+        },
+        "avg_sentiment_score": 0.7423755237838608,
+        "opinion_percentage": 33.24824505424378,
+        "avg_opinion_markers_per_article": 0.18251435864709636,
+        "framing": {
+            "avg_framing_score": 0.30397787704743673,
+            "avg_negative_frames": 0.2356945330780685,
+            "avg_positive_frames": 0.5396724101255053
+        },
+        "overall_bias_score": -0.0795788130185067
+    },
+    "congress": {
+        "total_mentions": 4824,
+        "sentiment_distribution": {
+            "positive": 7.131011608623548,
+            "negative": 11.380597014925373,
+            "neutral": 81.48839137645108
+        },
+        "avg_sentiment_score": 0.7425412120078235,
+        "opinion_percentage": 34.43200663349917,
+        "avg_opinion_markers_per_article": 0.18200663349917082,
+        "framing": {
+            "avg_framing_score": 0.34950248756218905,
+            "avg_negative_frames": 0.21434494195688225,
+            "avg_positive_frames": 0.5638474295190713
+        },
+        "overall_bias_score": -0.07589137645107795
+    },
+    "comparative": {
+        "coverage_ratio_bjp_to_congress": 0.974502487562189,
+        "sentiment_gap": -0.1750447930523933,
+        "bias_score_difference": -0.003687436567428745
+    }
+}
