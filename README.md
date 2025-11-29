@@ -48,6 +48,26 @@ BiasLens avoids a single "black box" model. Instead, it aggregates insights from
 
 ---
 
+## ⚙️ Configuration
+
+BiasLens uses external JSON configuration files located in the `config/` directory. You can customize these files to tune the model:
+
+*   `entities.json`: Define political entities and their aliases.
+*   `political_lexicon.json`: Sentiment scores for political terms.
+*   `loaded_lexicon.json`: List of propaganda/inflammatory words.
+*   `opinion_signals.json` & `fact_markers.json`: For subjectivity analysis.
+*   `discourse_markers.json`: For balance detection.
+
+## 📊 Evaluation
+
+To evaluate the model against a test set:
+
+1.  Prepare a CSV file (e.g., `test_set.csv`) with columns: `url,main_entity,true_stance,true_bias_risk`.
+2.  Run the evaluation script:
+    ```bash
+    python evaluate.py test_set.csv
+    ```
+
 ## 🛠️ Tech Stack
 
 *   **Backend**: FastAPI (Python) - High-performance web framework.
@@ -87,7 +107,10 @@ BiasLens avoids a single "black box" model. Instead, it aggregates insights from
 
 ```
 BiasLens/
+├── config/              # JSON Configuration files
 ├── main.py              # FastAPI backend & Logic
+├── evaluate.py          # Evaluation script
+├── test_set.csv         # Sample test data
 ├── index.html           # Frontend UI
 ├── requirements.txt     # Python dependencies
 └── README.md            # Documentation

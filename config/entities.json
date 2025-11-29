@@ -1,0 +1,14 @@
+{
+    "BJP": [
+        "bjp", "modi", "narendra modi", "bharatiya janata party",
+        "saffron party", "lotus", "sangh", "rss", "hindutva"
+    ],
+    "Congress": [
+        "congress", "inc", "rahul gandhi", "sonia gandhi",
+        "kharge", "grand old party", "upa"
+    ],
+    "AAP": [
+        "aap", "aam aadmi party", "arvind kejriwal", "kejriwal",
+        "sisodia", "bhagwant mann"
+    ]
+}

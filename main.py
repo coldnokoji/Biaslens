@@ -12,38 +12,25 @@ app = FastAPI(title="BiasLens")
 
 # --- Configuration & Lexicons ---
 
-ENTITIES = {
-    "BJP": ["bjp", "modi", "narendra modi", "bharatiya janata party", "saffron party", "lotus"],
-    "Congress": ["congress", "inc", "rahul gandhi", "sonia gandhi", "kharge", "grand old party"],
-    "AAP": ["aap", "aam aadmi party", "arvind kejriwal", "kejriwal", "sisodia"]
-}
+import json
+import os
 
-# Extended Political Lexicon (Inject into VADER)
-POLITICAL_LEXICON = {
-    # Negative
-    "scam": -3.0, "corruption": -3.0, "communal": -2.5, "dynastic": -2.0, 
-    "anti-national": -3.5, "dictator": -3.0, "fascist": -3.0, "appeasement": -2.0,
-    "jumla": -2.0, "puppet": -2.0, "incompetent": -2.0, "failure": -2.0,
-    
-    # Positive
-    "vikas": 2.5, "development": 2.0, "welfare": 2.0, "inclusive": 2.0,
-    "visionary": 2.5, "historic": 2.0, "masterstroke": 2.5, "reform": 1.5,
-    "growth": 1.5, "empowerment": 2.0
-}
+# --- Configuration & Lexicons ---
 
-# Propaganda/Loaded Language Lexicon
-LOADED_LEXICON = [
-    "anti-national", "urban naxal", "tukde", "sickular", "bhakt",
-    "godi media", "corrupt", "traitor", "shameless", "evil", "draconian",
-    "bizarre", "shocking", "brutal", "massacre", "genocide", "propaganda"
-]
+def load_config(filename, default):
+    try:
+        with open(os.path.join("config", filename), "r") as f:
+            return json.load(f)
+    except FileNotFoundError:
+        print(f"Warning: {filename} not found. Using default.")
+        return default
 
-# Subjectivity Markers
-OPINION_SIGNALS = ["i think", "clearly", "everyone knows", "undoubtedly", "obviously", "believe", "feel"]
-FACT_MARKERS = ["report said", "according to", "stated", "official", "data", "study", "survey"]
-
-# Balance Markers
-DISCOURSE_MARKERS = ["however", "but", "on the other hand", "although", "conversely", "despite", "while"]
+ENTITIES = load_config("entities.json", {})
+POLITICAL_LEXICON = load_config("political_lexicon.json", {})
+LOADED_LEXICON = load_config("loaded_lexicon.json", [])
+OPINION_SIGNALS = load_config("opinion_signals.json", [])
+FACT_MARKERS = load_config("fact_markers.json", [])
+DISCOURSE_MARKERS = load_config("discourse_markers.json", [])
 
 # Initialize VADER
 analyzer = SentimentIntensityAnalyzer()
@@ -51,10 +38,26 @@ analyzer.lexicon.update(POLITICAL_LEXICON)
 
 # --- Models ---
 
+import requests
+
+# ... (imports)
+
 def extract_text(url: str) -> str:
-    downloaded = trafilatura.fetch_url(url)
+    # Use requests with a User-Agent to avoid being blocked
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+    }
+    try:
+        response = requests.get(url, headers=headers, timeout=10)
+        response.raise_for_status()
+        downloaded = response.text
+    except Exception:
+        # Fallback to trafilatura fetcher
+        downloaded = trafilatura.fetch_url(url)
+
     if not downloaded:
         raise HTTPException(status_code=400, detail="Could not fetch URL")
+    
     text = trafilatura.extract(downloaded)
     if not text:
         raise HTTPException(status_code=400, detail="Could not extract text")
@@ -168,16 +171,11 @@ async def analyze_article(request: AnalyzeRequest):
         subjectivity_score = analyze_subjectivity(sentences)
         loaded_bias = analyze_loaded_language(text)
         balance_bias = analyze_balance(sentences)
-        source_history = 0.0 # Placeholder
+        source_history = 0.0 
         
-        # Council of Models Aggregation
-        # Weights: Stance(0.3), Subj(0.2), Loaded(0.2), Balance(0.2), History(0.1)
-        
-        # Stance contribution: Deviation from neutral (0.5 in 0-1 scale, or 0 in -1 to 1)
-        # We'll take the max absolute stance of any entity as the stance bias risk
         max_stance_dev = 0
         for res in stance_results:
-            dev = abs(res['avg_sentiment']) # 0 to 1
+            dev = abs(res['avg_sentiment'])
             if dev > max_stance_dev:
                 max_stance_dev = dev
         
@@ -206,6 +204,47 @@ async def analyze_article(request: AnalyzeRequest):
             "explanation": explanation
         }
         
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/debug-analyze")
+async def debug_analyze_article(request: AnalyzeRequest):
+    try:
+        text = extract_text(request.url)
+        sentences = split_sentences(text)
+        
+        # Run Models
+        stance_results = analyze_stance(sentences)
+        subjectivity_score = analyze_subjectivity(sentences)
+        loaded_bias = analyze_loaded_language(text)
+        balance_bias = analyze_balance(sentences)
+        source_history = 0.0 
+        
+        max_stance_dev = 0
+        for res in stance_results:
+            dev = abs(res['avg_sentiment'])
+            if dev > max_stance_dev:
+                max_stance_dev = dev
+        
+        overall_bias = (
+            0.3 * max_stance_dev +
+            0.2 * subjectivity_score +
+            0.2 * loaded_bias +
+            0.2 * balance_bias +
+            0.1 * source_history
+        )
+        
+        return {
+            "stance_results": stance_results,
+            "subjectivity_score": subjectivity_score,
+            "loaded_bias": loaded_bias,
+            "balance_bias": balance_bias,
+            "overall_bias": overall_bias
+        }
+    except HTTPException as he:
+        raise he
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
